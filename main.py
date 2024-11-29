@@ -17,80 +17,6 @@ class TreeNode:
         self.children.extend(children)
 
 
-def PreOrderTraversal(root):
-    if root is None:
-        return
-    stack = [root]
-    while stack:
-        node = stack.pop()
-        yield ("visit", node)
-        # Add children in reverse order to maintain left-to-right traversal
-        for child in reversed(node.children):
-            yield ("add", child)
-            stack.append(child)
-
-
-def PostOrderTraversal(root):
-    if root is None:
-        return
-    yield ("add", root)  # Add the root node
-    stack = [(root, False)]
-    while stack:
-        node, visitedFlag = stack.pop()
-        if node is None:
-            continue
-        if visitedFlag:
-            yield ("visit", node)
-        else:
-            stack.append((node, True))
-            for child in reversed(node.children):
-                yield ("add", child)
-                stack.append((child, False))
-
-
-def InOrderTraversal(root):
-    if root is None:
-        return
-    yield ("add", root)  # Add the root node
-    stack = [(root, False)]
-    while stack:
-        node, visited = stack.pop()
-        if node is None:
-            continue
-        if visited:
-            yield ("visit", node)
-        else:
-            stack.append((node, True))  # Mark the node to be visited after its children
-            n = len(node.children)
-            mid = n // 2
-            # Add right children
-            for child in reversed(node.children[mid + 1 :]):
-                yield ("add", child)
-                stack.append((child, False))
-            # Add the middle child
-            if mid < n:
-                yield ("add", node.children[mid])
-                stack.append((node.children[mid], False))
-            # Add left children
-            for child in reversed(node.children[:mid]):
-                yield ("add", child)
-                stack.append((child, False))
-
-
-def LevelOrderTraversal(root):
-    if root is None:
-        return
-    queue = deque()
-    queue.append(root)
-    yield ("add", root)
-    while queue:
-        node = queue.popleft()
-        yield ("visit", node)
-        for child in node.children:
-            yield ("add", child)
-            queue.append(child)
-
-
 def CreateRandomTree(numberOfNodes, maxChildren):
     if numberOfNodes <= 0:
         raise ValueError("Number of nodes must be positive.")
@@ -121,7 +47,6 @@ def CreateRandomTree(numberOfNodes, maxChildren):
             children.append(child)
             nodes.append(child)
             potentialParents.append(child)
-        random.shuffle(children)
         parent.addChildren(children)
         if len(parent.children) >= maxChildren:
             potentialParents.remove(parent)
@@ -157,7 +82,10 @@ def BuildGraph(root):
 def HierarchyPos(G, root, width=1.5, vertGap=0.5, vertLoc=0, xCenter=0.5):
     def _HierarchyPos(G, root, leftmost, width, vertGap, vertLoc, pos, parent=None):
         children = list(G.successors(root))
-        random.shuffle(children)
+        # Remove or comment out the random shuffling to maintain order
+        # random.shuffle(children)
+        # Sort children based on their ASCII values
+        children.sort(key=lambda child: child)
         if not children:
             pos[root] = (leftmost + width / 2, vertLoc)
             return leftmost + width, pos
@@ -279,6 +207,45 @@ def VisualizeTraversal(root, traversalFunc, traversalName, speed):
     plt.close()
 
 
+def BreadthFirstSearch(root):
+    queue = deque()
+    queue.append(root)
+    while queue:
+        node = queue.popleft()
+        yield ("visit", node)
+        for child in node.children:
+            yield ("add", child)
+            queue.append(child)
+
+
+def DepthFirstSearch(root):
+    stack = [root]
+    while stack:
+        node = stack.pop()
+        yield ("visit", node)
+        for child in node.children:
+            yield ("add", child)
+            stack.append(child)
+
+
+def LevelOrderTraversal(root):
+    queue = deque()
+    queue.append(root)
+    while queue:
+        node = queue.popleft()
+        yield ("visit", node)
+        for child in node.children:
+            yield ("add", child)
+            queue.append(child)
+
+
+traversals = [
+    (BreadthFirstSearch, "BFS"),
+    (DepthFirstSearch, "DFS"),
+    (LevelOrderTraversal, "Level Order"),
+]
+
+
 def Main():
     print("=== N-ary Tree Traversal Visualization ===")
 
@@ -342,19 +309,12 @@ def Main():
         print(f"Error creating tree: {ve}")
         return
 
-    traversals = [
-        (PreOrderTraversal, "Pre-order"),
-        (InOrderTraversal, "In-order"),
-        (PostOrderTraversal, "Post-order"),
-        (LevelOrderTraversal, "Level-order"),
-    ]
-
-    for func, name in tqdm(traversals, desc="Processing Traversals"):
-
-        if name != "Post-order":
-
-            continue
-
+    for func, name in tqdm(
+        traversals,
+        desc="Processing Traversals",
+        colour="#00274C",
+    ):
+        # Removed the filter to visualize all traversals
         VisualizeTraversal(root, func, name, speed)
 
 
